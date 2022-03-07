@@ -23,7 +23,18 @@ tstamp=$(date "+%d%m%Y-%H%M%S")
 cd /var/log/apache2
 tar -cf $myname-httpd-logs-$tstamp.tar *
 cp $myname-httpd-logs-$tstamp.tar /tmp
-rm -f $myname-httpd-logs-$tstamp.tar
 aws s3 cp /tmp/$myname-httpd-logs-$tstamp.tar s3://$s3_bucket/ 1>/dev/null
+if [ ! -f /var/www/html/inventory.html ]
+then
+	awk 'BEGIN{print "<pre>","<a>Log Type</a>\t","<a>Date Created</a>\t\t\t","<a>Type</a>\t","<a>Size</a>","<pre>"}' > /var/www/html/inventory.html
+	ls -lr $myname-httpd-logs-$tstamp.tar | awk -v myname1="$tstamp" '{gsub(/.tar/, "")};{print "<a>httpd-logs<a>\t","<a>"myname1"</a>\t\t","<a>"$5/1024 "K</a>\t","<a>tar</a>"}' >> /var/www/html/inventory.html
+else
+	ls -lr $myname-httpd-logs-$tstamp.tar | awk -v myname1="$tstamp" '{gsub(/.tar/, "")};{print "<a>httpd-logs<a>\t","<a>"myname1"</a>\t\t","<a>"$5/1024 "K</a>\t","<a>tar</a>"}' >> /var/www/html/inventory.html
+fi
+rm -f $myname-httpd-logs-$tstamp.tar	
+if [ ! -f /etc/cron.d/automation ]
+then
+	echo "0 12 * * * root /root/Automation_Project/automation.sh" > /etc/cron.d/automation
+fi
 echo "Operation Completed"
 
